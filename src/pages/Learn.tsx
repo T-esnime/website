@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -197,7 +198,7 @@ const Learn = () => {
                 <div className="prose prose-invert max-w-none">
                   <div 
                     className="text-foreground leading-relaxed whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: sectionContent.content }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(sectionContent.content) }}
                   />
                 </div>
               ) : (
