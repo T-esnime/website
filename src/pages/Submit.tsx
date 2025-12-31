@@ -3,13 +3,12 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { createSubmission, addPoints, Section } from '@/lib/supabase-helpers';
 import { toast } from 'sonner';
 import { ArrowLeft, Send, Loader2, FileText, Info } from 'lucide-react';
+import { BlockEditor, ContentBlock, blocksToJson, getPlainTextContent, getDefaultBlocks } from '@/components/block-editor';
 
 const Submit = () => {
   const [searchParams] = useSearchParams();
@@ -18,11 +17,12 @@ const Submit = () => {
   
   const [section, setSection] = useState<Section | null>(null);
   const [lessonTitle, setLessonTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [blocks, setBlocks] = useState<ContentBlock[]>(getDefaultBlocks());
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const sectionId = searchParams.get('section');
+  const charCount = getPlainTextContent(blocks).length;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -76,13 +76,15 @@ const Submit = () => {
     
     if (!user || !section) return;
     
-    if (content.trim().length < 50) {
+    if (charCount < 50) {
       toast.error('Content must be at least 50 characters');
       return;
     }
     
     setSubmitting(true);
     
+    // Convert blocks to JSON for storage
+    const content = blocksToJson(blocks);
     const { data, error } = await createSubmission(section.id, user.id, content);
     
     if (error) {
@@ -154,18 +156,16 @@ const Submit = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="content">Your Content</Label>
-                <Textarea
-                  id="content"
-                  placeholder="Write your educational content here. Explain concepts clearly, provide examples, and help others learn..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="min-h-[300px] bg-secondary border-border resize-y"
-                  disabled={submitting}
-                />
-                <p className="text-sm text-muted-foreground">
-                  {content.length} characters (minimum 50)
+                <p className="text-sm text-muted-foreground mb-2">
+                  Type "/" for block commands • Drag blocks to reorder
                 </p>
+                <div className="min-h-[300px] bg-secondary/30 border border-border rounded-lg p-4">
+                  <BlockEditor
+                    initialBlocks={blocks}
+                    onChange={setBlocks}
+                    minCharacters={50}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-4">
@@ -173,7 +173,7 @@ const Submit = () => {
                   type="submit"
                   variant="hero"
                   size="lg"
-                  disabled={submitting || content.trim().length < 50}
+                  disabled={submitting || charCount < 50}
                   className="flex-1"
                 >
                   {submitting ? (
