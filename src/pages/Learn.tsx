@@ -10,12 +10,15 @@ import {
   getLessons, 
   getSections, 
   getApprovedSubmission,
+  getVotes,
+  voteOnSubmission,
   Module, 
   Lesson, 
   Section,
   Submission
 } from '@/lib/supabase-helpers';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import { 
   Globe, 
   Server, 
@@ -26,7 +29,9 @@ import {
   CheckCircle2,
   Circle,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +50,8 @@ const Learn = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
   const [sectionContent, setSectionContent] = useState<Submission | null>(null);
+  const [votes, setVotes] = useState<{ upvotes: number; downvotes: number; userVote: number | null }>({ upvotes: 0, downvotes: 0, userVote: null });
+  const [voting, setVoting] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -115,6 +122,44 @@ const Learn = () => {
   const loadSectionContent = async (secId: string) => {
     const data = await getApprovedSubmission(secId);
     setSectionContent(data);
+    
+    // Load votes if there's content
+    if (data) {
+      const votesData = await getVotes(data.id, user?.id);
+      setVotes(votesData);
+    } else {
+      setVotes({ upvotes: 0, downvotes: 0, userVote: null });
+    }
+  };
+  
+  const handleVote = async (voteType: 1 | -1) => {
+    if (!user) {
+      toast.error('Please sign in to vote');
+      return;
+    }
+    
+    if (!sectionContent) return;
+    
+    setVoting(true);
+    const { action, error } = await voteOnSubmission(sectionContent.id, user.id, voteType);
+    
+    if (error) {
+      toast.error('Failed to vote');
+    } else {
+      // Reload votes
+      const votesData = await getVotes(sectionContent.id, user.id);
+      setVotes(votesData);
+      
+      if (action === 'created') {
+        toast.success('+1 point for voting!');
+      } else if (action === 'removed') {
+        toast.success('Vote removed');
+      } else {
+        toast.success('Vote updated');
+      }
+    }
+    
+    setVoting(false);
   };
 
   const navigateToModule = (modId: string) => {
@@ -195,11 +240,49 @@ const Learn = () => {
             </CardHeader>
             <CardContent>
               {sectionContent ? (
-                <div className="prose prose-invert max-w-none">
-                  <div 
-                    className="text-foreground leading-relaxed whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(sectionContent.content) }}
-                  />
+                <div>
+                  <div className="prose prose-invert max-w-none">
+                    <div 
+                      className="text-foreground leading-relaxed whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(sectionContent.content) }}
+                    />
+                  </div>
+                  
+                  {/* Voting UI */}
+                  <div className="mt-8 pt-6 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm text-muted-foreground">Was this helpful?</span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant={votes.userVote === 1 ? "success" : "outline"}
+                            size="sm"
+                            onClick={() => handleVote(1)}
+                            disabled={voting}
+                            className="gap-1"
+                          >
+                            <ThumbsUp className="w-4 h-4" />
+                            {votes.upvotes}
+                          </Button>
+                          <Button
+                            variant={votes.userVote === -1 ? "destructive" : "outline"}
+                            size="sm"
+                            onClick={() => handleVote(-1)}
+                            disabled={voting}
+                            className="gap-1"
+                          >
+                            <ThumbsDown className="w-4 h-4" />
+                            {votes.downvotes}
+                          </Button>
+                        </div>
+                      </div>
+                      {!user && (
+                        <span className="text-xs text-muted-foreground">
+                          <Link to="/auth" className="text-primary hover:underline">Sign in</Link> to vote
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">
