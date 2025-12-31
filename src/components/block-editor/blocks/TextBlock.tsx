@@ -1,0 +1,231 @@
+import { useRef, useEffect, KeyboardEvent } from 'react';
+import { ContentBlock, TextMetadata, TextAlignment } from '../types';
+import { cn } from '@/lib/utils';
+import { 
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  List, ListOrdered, CheckSquare
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+
+interface TextBlockProps {
+  block: ContentBlock;
+  isSelected: boolean;
+  isFocused: boolean;
+  onUpdate: (content: string, metadata?: TextMetadata) => void;
+  onFocus: () => void;
+  onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
+  placeholder?: string;
+}
+
+export const TextBlock = ({
+  block,
+  isSelected,
+  isFocused,
+  onUpdate,
+  onFocus,
+  onKeyDown,
+  placeholder = "Type '/' for commands..."
+}: TextBlockProps) => {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const metadata = block.metadata as TextMetadata | undefined;
+
+  useEffect(() => {
+    if (isFocused && editorRef.current) {
+      editorRef.current.focus();
+      // Place cursor at the end
+      const range = document.createRange();
+      const sel = window.getSelection();
+      if (editorRef.current.childNodes.length > 0) {
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+      }
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, [isFocused]);
+
+  const handleInput = () => {
+    if (editorRef.current) {
+      onUpdate(editorRef.current.innerHTML, metadata);
+    }
+  };
+
+  const applyFormatting = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    handleInput();
+  };
+
+  const setAlignment = (alignment: TextAlignment) => {
+    onUpdate(block.content, { ...metadata, alignment });
+  };
+
+  const setListType = (listType: 'none' | 'bullet' | 'numbered' | 'checklist') => {
+    onUpdate(block.content, { ...metadata, listType });
+  };
+
+  const getAlignmentClass = () => {
+    switch (metadata?.alignment) {
+      case 'center': return 'text-center';
+      case 'right': return 'text-right';
+      case 'justify': return 'text-justify';
+      default: return 'text-left';
+    }
+  };
+
+  const getListClass = () => {
+    switch (metadata?.listType) {
+      case 'bullet': return 'list-disc list-inside';
+      case 'numbered': return 'list-decimal list-inside';
+      case 'checklist': return '';
+      default: return '';
+    }
+  };
+
+  return (
+    <div className="relative group">
+      {/* Formatting Toolbar - appears on selection/focus */}
+      {isSelected && (
+        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => applyFormatting('bold')}
+            title="Bold (Ctrl+B)"
+          >
+            <span className="font-bold text-sm">B</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => applyFormatting('italic')}
+            title="Italic (Ctrl+I)"
+          >
+            <span className="italic text-sm">I</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => applyFormatting('underline')}
+            title="Underline (Ctrl+U)"
+          >
+            <span className="underline text-sm">U</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => applyFormatting('strikeThrough')}
+            title="Strikethrough"
+          >
+            <span className="line-through text-sm">S</span>
+          </Button>
+          
+          <div className="w-px h-5 bg-border mx-1" />
+          
+          {/* Alignment */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <AlignLeft className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-1">
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('left')}>
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('center')}>
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('right')}>
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('justify')}>
+                  <AlignJustify className="h-4 w-4" />
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* List */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <List className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-1">
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setListType('bullet')}>
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setListType('numbered')}>
+                  <ListOrdered className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setListType('checklist')}>
+                  <CheckSquare className="h-4 w-4" />
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <div className="w-px h-5 bg-border mx-1" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => {
+              const url = prompt('Enter link URL:');
+              if (url) applyFormatting('createLink', url);
+            }}
+            title="Insert Link"
+          >
+            🔗
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => applyFormatting('removeFormat')}
+            title="Clear Formatting"
+          >
+            ✕
+          </Button>
+        </div>
+      )}
+
+      {/* Editable Content */}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        className={cn(
+          "min-h-[1.5em] outline-none py-1 px-1 rounded transition-colors",
+          "focus:bg-secondary/30",
+          getAlignmentClass(),
+          getListClass(),
+          "prose prose-sm dark:prose-invert max-w-none",
+          "[&_a]:text-primary [&_a]:underline",
+          !block.content && "text-muted-foreground"
+        )}
+        onInput={handleInput}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
+        dangerouslySetInnerHTML={{ 
+          __html: block.content || `<span class="text-muted-foreground pointer-events-none">${placeholder}</span>` 
+        }}
+        data-placeholder={placeholder}
+      />
+    </div>
+  );
+};
