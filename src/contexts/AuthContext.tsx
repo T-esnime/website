@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { getProfile, getUserRole, Profile } from '@/lib/supabase-helpers';
+import { getProfile, getUserRole, Profile, checkAndAwardDailyLoginPoints } from '@/lib/supabase-helpers';
 
 interface AuthContextType {
   user: User | null;
@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<'user' | 'admin' | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, isNewLogin = false) => {
     const [profileData, userRole] = await Promise.all([
       getProfile(userId),
       getUserRole(userId)
@@ -46,6 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setProfile(profileData);
     setRole(userRole);
+    
+    // Check and award daily login points for non-admin users
+    if (isNewLogin && userRole !== 'admin') {
+      await checkAndAwardDailyLoginPoints(userId);
+    }
   };
 
   const refreshProfile = async () => {
@@ -63,8 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Defer fetching additional data
         if (session?.user) {
+          // Award daily login points on SIGNED_IN event (new login)
+          const isNewLogin = event === 'SIGNED_IN';
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            fetchUserData(session.user.id, isNewLogin);
           }, 0);
         } else {
           setProfile(null);
@@ -81,7 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserData(session.user.id);
+        // Check daily login on initial page load too
+        fetchUserData(session.user.id, true);
       }
       
       setLoading(false);

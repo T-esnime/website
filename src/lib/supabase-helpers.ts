@@ -203,11 +203,22 @@ export async function createSubmission(sectionId: string, userId: string, conten
 }
 
 export async function getApprovedSubmission(sectionId: string): Promise<Submission | null> {
+  // First get the section to find its approved_submission_id
+  const { data: section, error: sectionError } = await supabase
+    .from('sections')
+    .select('approved_submission_id')
+    .eq('id', sectionId)
+    .maybeSingle();
+  
+  if (sectionError || !section?.approved_submission_id) {
+    return null;
+  }
+  
+  // Then fetch the specific approved submission
   const { data, error } = await supabase
     .from('submissions')
     .select('*')
-    .eq('section_id', sectionId)
-    .eq('status', 'approved')
+    .eq('id', section.approved_submission_id)
     .maybeSingle();
   
   if (error) {
@@ -287,12 +298,19 @@ export async function rejectSubmission(submissionId: string, adminId: string, fe
 }
 
 // Vote helpers
-export async function voteOnSubmission(submissionId: string, userId: string, voteType: 1 | -1) {
+export async function voteOnSubmission(submissionId: string, voterId: string, voteType: 1 | -1) {
+  // Get the submission to find the author
+  const { data: submission } = await supabase
+    .from('submissions')
+    .select('user_id')
+    .eq('id', submissionId)
+    .maybeSingle();
+  
   const { data: existingVote } = await supabase
     .from('votes')
     .select('*')
     .eq('submission_id', submissionId)
-    .eq('user_id', userId)
+    .eq('user_id', voterId)
     .maybeSingle();
   
   if (existingVote) {
@@ -309,6 +327,12 @@ export async function voteOnSubmission(submissionId: string, userId: string, vot
         .from('votes')
         .update({ vote_type: voteType })
         .eq('id', existingVote.id);
+      
+      // Award points to author if changing from downvote to upvote
+      if (!error && voteType === 1 && submission?.user_id && submission.user_id !== voterId) {
+        await addPoints(submission.user_id, 4, 'Vote changed to upvote', submissionId);
+      }
+      
       return { action: 'updated', error };
     }
   } else {
@@ -317,14 +341,25 @@ export async function voteOnSubmission(submissionId: string, userId: string, vot
       .from('votes')
       .insert({
         submission_id: submissionId,
-        user_id: userId,
+        user_id: voterId,
         vote_type: voteType
       });
+    
+    if (!error) {
+      // Award +1 point to voter for voting
+      await addPoints(voterId, 1, 'Voted on content', submissionId);
+      
+      // Award +2 points to author if upvote (and voter isn't the author)
+      if (voteType === 1 && submission?.user_id && submission.user_id !== voterId) {
+        await addPoints(submission.user_id, 2, 'Upvote received', submissionId);
+      }
+    }
+    
     return { action: 'created', error };
   }
 }
 
-export async function getVotes(submissionId: string): Promise<{ upvotes: number; downvotes: number; userVote: number | null }> {
+export async function getVotes(submissionId: string, currentUserId?: string): Promise<{ upvotes: number; downvotes: number; userVote: number | null }> {
   const { data: votes } = await supabase
     .from('votes')
     .select('*')
@@ -337,7 +372,13 @@ export async function getVotes(submissionId: string): Promise<{ upvotes: number;
   const upvotes = votes.filter(v => v.vote_type === 1).length;
   const downvotes = votes.filter(v => v.vote_type === -1).length;
   
-  return { upvotes, downvotes, userVote: null };
+  let userVote: number | null = null;
+  if (currentUserId) {
+    const userVoteRecord = votes.find(v => v.user_id === currentUserId);
+    userVote = userVoteRecord?.vote_type ?? null;
+  }
+  
+  return { upvotes, downvotes, userVote };
 }
 
 // Leaderboard helpers
@@ -366,4 +407,36 @@ export async function addPoints(userId: string, points: number, reason: string, 
   });
   
   return { error };
+}
+
+// Daily login points helper
+export async function checkAndAwardDailyLoginPoints(userId: string): Promise<boolean> {
+  // Get user's profile to check last login date
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('last_login_date')
+    .eq('id', userId)
+    .maybeSingle();
+  
+  if (profileError || !profile) {
+    return false;
+  }
+  
+  const today = new Date().toISOString().split('T')[0];
+  const lastLogin = profile.last_login_date;
+  
+  // If last login is not today, award points
+  if (lastLogin !== today) {
+    // Update last login date first
+    await supabase
+      .from('profiles')
+      .update({ last_login_date: today })
+      .eq('id', userId);
+    
+    // Award daily login points
+    await addPoints(userId, 2, 'Daily login bonus');
+    return true;
+  }
+  
+  return false;
 }
