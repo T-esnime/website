@@ -37,7 +37,7 @@ const BLOCK_ICONS: Record<BlockType, React.ReactNode> = {
   table: <Table className="w-4 h-4" />,
 };
 
-// Block types available in Phase 1
+// All available block types
 const AVAILABLE_BLOCKS: BlockType[] = [
   'text',
   'heading1',
@@ -48,6 +48,8 @@ const AVAILABLE_BLOCKS: BlockType[] = [
   'code',
   'divider',
   'quote',
+  'quiz',
+  'table',
 ];
 
 export const CommandMenu = ({

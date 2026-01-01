@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import DOMPurify from 'dompurify';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { BlockRenderer } from '@/components/block-editor';
 import { 
   getModules, 
   getLessons, 
@@ -241,12 +241,7 @@ const Learn = () => {
             <CardContent>
               {sectionContent ? (
                 <div>
-                  <div className="prose prose-invert max-w-none">
-                    <div 
-                      className="text-foreground leading-relaxed whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(sectionContent.content) }}
-                    />
-                  </div>
+                  <BlockRenderer content={sectionContent.content} />
                   
                   {/* Voting UI */}
                   <div className="mt-8 pt-6 border-t border-border">

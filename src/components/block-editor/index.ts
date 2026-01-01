@@ -1,4 +1,5 @@
 export { BlockEditor } from './BlockEditor';
+export { BlockRenderer } from './BlockRenderer';
 export type { 
   ContentBlock, 
   BlockType, 
