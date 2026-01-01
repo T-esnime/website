@@ -1,4 +1,4 @@
-import { useRef, useEffect, KeyboardEvent } from 'react';
+import { useRef, useEffect, useState, KeyboardEvent } from 'react';
 import { ContentBlock } from '../types';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +18,15 @@ export const HeadingBlock = ({
   onKeyDown,
 }: HeadingBlockProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const [isEmpty, setIsEmpty] = useState(!block.content);
+
+  // Sync content on mount
+  useEffect(() => {
+    if (editorRef.current && block.content) {
+      editorRef.current.textContent = block.content;
+      setIsEmpty(false);
+    }
+  }, [block.id]);
 
   useEffect(() => {
     if (isFocused && editorRef.current) {
@@ -35,7 +44,9 @@ export const HeadingBlock = ({
 
   const handleInput = () => {
     if (editorRef.current) {
-      onUpdate(editorRef.current.textContent || '');
+      const content = editorRef.current.textContent || '';
+      setIsEmpty(!content.trim());
+      onUpdate(content);
     }
   };
 
@@ -66,22 +77,28 @@ export const HeadingBlock = ({
   };
 
   return (
-    <div
-      ref={editorRef}
-      contentEditable
-      suppressContentEditableWarning
-      className={cn(
-        "outline-none py-1 px-1 rounded transition-colors",
-        "focus:bg-secondary/30",
-        getHeadingStyles(),
-        !block.content && "text-muted-foreground"
+    <div className="relative">
+      {isEmpty && (
+        <div className={cn(
+          "absolute top-1 left-1 text-muted-foreground pointer-events-none select-none",
+          getHeadingStyles()
+        )}>
+          {getPlaceholder()}
+        </div>
       )}
-      onInput={handleInput}
-      onFocus={onFocus}
-      onKeyDown={onKeyDown}
-      data-placeholder={getPlaceholder()}
-    >
-      {block.content || getPlaceholder()}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        className={cn(
+          "outline-none py-1 px-1 rounded transition-colors",
+          "focus:bg-secondary/30",
+          getHeadingStyles()
+        )}
+        onInput={handleInput}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
+      />
     </div>
   );
 };
