@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, KeyboardEvent } from 'react';
+import { useState, useCallback, useRef, useEffect, KeyboardEvent } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { 
   ContentBlock, 
@@ -9,7 +9,9 @@ import {
   TextMetadata,
   ImageMetadata,
   VideoMetadata,
-  CodeMetadata
+  CodeMetadata,
+  QuizMetadata,
+  TableMetadata
 } from './types';
 import { TextBlock } from './blocks/TextBlock';
 import { HeadingBlock } from './blocks/HeadingBlock';
@@ -18,17 +20,22 @@ import { CodeBlock } from './blocks/CodeBlock';
 import { QuoteBlock } from './blocks/QuoteBlock';
 import { DividerBlock } from './blocks/DividerBlock';
 import { VideoBlock } from './blocks/VideoBlock';
+import { QuizBlock } from './blocks/QuizBlock';
+import { TableBlock } from './blocks/TableBlock';
 import { CommandMenu } from './CommandMenu';
 import { BlockMenu } from './BlockMenu';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { GripVertical, Plus } from 'lucide-react';
+import { GripVertical, Plus, Eye, Edit3, Save, Clock, Keyboard } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface BlockEditorProps {
   initialBlocks?: ContentBlock[];
   onChange?: (blocks: ContentBlock[]) => void;
   readOnly?: boolean;
   minCharacters?: number;
+  autoSaveKey?: string; // Key for localStorage auto-save
+  showPreview?: boolean; // Show preview toggle
 }
 
 export const BlockEditor = ({
@@ -36,12 +43,30 @@ export const BlockEditor = ({
   onChange,
   readOnly = false,
   minCharacters = 50,
+  autoSaveKey,
+  showPreview = true,
 }: BlockEditorProps) => {
-  const [blocks, setBlocks] = useState<ContentBlock[]>(
-    initialBlocks || getDefaultBlocks()
-  );
+  // Load from localStorage if autoSaveKey provided
+  const getInitialBlocks = () => {
+    if (autoSaveKey) {
+      const saved = localStorage.getItem(`draft-${autoSaveKey}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        } catch {}
+      }
+    }
+    return initialBlocks || getDefaultBlocks();
+  };
+
+  const [blocks, setBlocks] = useState<ContentBlock[]>(getInitialBlocks);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [commandMenu, setCommandMenu] = useState<{
     isOpen: boolean;
     position: { x: number; y: number };
@@ -55,6 +80,18 @@ export const BlockEditor = ({
   });
 
   const editorRef = useRef<HTMLDivElement>(null);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    if (!autoSaveKey || readOnly) return;
+    
+    const timer = setTimeout(() => {
+      localStorage.setItem(`draft-${autoSaveKey}`, JSON.stringify(blocks));
+      setLastSaved(new Date());
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [blocks, autoSaveKey, readOnly]);
 
   // Update blocks and notify parent
   const updateBlocks = useCallback((newBlocks: ContentBlock[]) => {
@@ -332,6 +369,34 @@ export const BlockEditor = ({
             <DividerBlock
               block={block}
               isSelected={isSelected}
+              onFocus={() => {
+                setFocusedBlockId(block.id);
+                setSelectedBlockId(block.id);
+              }}
+            />
+          );
+        
+        case 'quiz':
+          return (
+            <QuizBlock
+              block={block}
+              isSelected={isSelected}
+              onUpdate={(content, metadata) => updateBlockContent(block.id, content, metadata)}
+              onDelete={() => deleteBlock(block.id)}
+              onFocus={() => {
+                setFocusedBlockId(block.id);
+                setSelectedBlockId(block.id);
+              }}
+            />
+          );
+        
+        case 'table':
+          return (
+            <TableBlock
+              block={block}
+              isSelected={isSelected}
+              onUpdate={(content, metadata) => updateBlockContent(block.id, content, metadata)}
+              onDelete={() => deleteBlock(block.id)}
               onFocus={() => {
                 setFocusedBlockId(block.id);
                 setSelectedBlockId(block.id);
