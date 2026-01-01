@@ -164,6 +164,7 @@ const Submit = () => {
                     initialBlocks={blocks}
                     onChange={setBlocks}
                     minCharacters={50}
+                    autoSaveKey={sectionId || undefined}
                   />
                 </div>
               </div>

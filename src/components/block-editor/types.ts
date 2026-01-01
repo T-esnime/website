@@ -121,12 +121,56 @@ export interface EditorState {
   focusedBlockId: string | null;
 }
 
+// Default metadata for block types
+const getDefaultMetadata = (type: BlockType): BlockMetadata | undefined => {
+  switch (type) {
+    case 'quiz':
+      return {
+        questions: [],
+        showResults: false,
+        randomizeOptions: false,
+      } as QuizMetadata;
+    case 'table':
+      return {
+        rows: [
+          [{ content: 'Header 1' }, { content: 'Header 2' }, { content: 'Header 3' }],
+          [{ content: '' }, { content: '' }, { content: '' }],
+          [{ content: '' }, { content: '' }, { content: '' }],
+        ],
+        hasHeader: true,
+        alternatingColors: true,
+        borderStyle: 'solid',
+      } as TableMetadata;
+    case 'code':
+      return {
+        language: 'javascript',
+        showLineNumbers: true,
+        theme: 'dark',
+      } as CodeMetadata;
+    case 'image':
+      return {
+        src: '',
+        size: 'large',
+        alignment: 'center',
+        borderRadius: 'medium',
+      } as ImageMetadata;
+    case 'video':
+      return {
+        url: '',
+        platform: 'youtube',
+        aspectRatio: '16:9',
+      } as VideoMetadata;
+    default:
+      return undefined;
+  }
+};
+
 // Helper to create a new block
 export const createBlock = (type: BlockType, content: string = '', metadata?: BlockMetadata): ContentBlock => ({
   id: crypto.randomUUID(),
   type,
   content,
-  metadata,
+  metadata: metadata ?? getDefaultMetadata(type),
   createdAt: Date.now(),
   updatedAt: Date.now(),
 });

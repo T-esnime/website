@@ -1,4 +1,4 @@
-import { useRef, useEffect, KeyboardEvent } from 'react';
+import { useRef, useEffect, useState, KeyboardEvent } from 'react';
 import { ContentBlock } from '../types';
 import { cn } from '@/lib/utils';
 import { Quote } from 'lucide-react';
@@ -19,6 +19,15 @@ export const QuoteBlock = ({
   onKeyDown,
 }: QuoteBlockProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const [isEmpty, setIsEmpty] = useState(!block.content);
+
+  // Sync content on mount
+  useEffect(() => {
+    if (editorRef.current && block.content) {
+      editorRef.current.textContent = block.content;
+      setIsEmpty(false);
+    }
+  }, [block.id]);
 
   useEffect(() => {
     if (isFocused && editorRef.current) {
@@ -36,7 +45,9 @@ export const QuoteBlock = ({
 
   const handleInput = () => {
     if (editorRef.current) {
-      onUpdate(editorRef.current.textContent || '');
+      const content = editorRef.current.textContent || '';
+      setIsEmpty(!content.trim());
+      onUpdate(content);
     }
   };
 
@@ -47,19 +58,21 @@ export const QuoteBlock = ({
     >
       <Quote className="absolute -left-3 -top-2 w-6 h-6 text-primary/40 bg-background rounded-full p-1" />
       
-      <div
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        className={cn(
-          "outline-none italic text-lg leading-relaxed",
-          !block.content && "text-muted-foreground"
+      <div className="relative">
+        {isEmpty && (
+          <div className="absolute top-0 left-0 italic text-lg text-muted-foreground pointer-events-none select-none">
+            Enter a quote...
+          </div>
         )}
-        onInput={handleInput}
-        onFocus={onFocus}
-        onKeyDown={onKeyDown}
-      >
-        {block.content || 'Enter a quote...'}
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          className="outline-none italic text-lg leading-relaxed min-h-[1.5em]"
+          onInput={handleInput}
+          onFocus={onFocus}
+          onKeyDown={onKeyDown}
+        />
       </div>
     </div>
   );

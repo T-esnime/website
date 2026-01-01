@@ -1,9 +1,9 @@
-import { useRef, useEffect, KeyboardEvent } from 'react';
+import { useRef, useEffect, useState, KeyboardEvent } from 'react';
 import { ContentBlock, TextMetadata, TextAlignment } from '../types';
 import { cn } from '@/lib/utils';
 import { 
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  List, ListOrdered, CheckSquare
+  List, ListOrdered, CheckSquare, Link, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +33,23 @@ export const TextBlock = ({
 }: TextBlockProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const metadata = block.metadata as TextMetadata | undefined;
+  const [isEmpty, setIsEmpty] = useState(!block.content);
+
+  // Sync content on mount or when block.content changes externally
+  useEffect(() => {
+    if (editorRef.current) {
+      const currentContent = editorRef.current.innerHTML;
+      // Only update if content actually changed from external source
+      if (currentContent !== block.content && block.content) {
+        editorRef.current.innerHTML = block.content;
+        setIsEmpty(false);
+      } else if (!block.content && currentContent) {
+        // Block was cleared externally
+        editorRef.current.innerHTML = '';
+        setIsEmpty(true);
+      }
+    }
+  }, [block.id]); // Only on block change, not content
 
   useEffect(() => {
     if (isFocused && editorRef.current) {
@@ -51,7 +68,10 @@ export const TextBlock = ({
 
   const handleInput = () => {
     if (editorRef.current) {
-      onUpdate(editorRef.current.innerHTML, metadata);
+      const content = editorRef.current.innerHTML;
+      const textContent = editorRef.current.textContent || '';
+      setIsEmpty(!textContent.trim());
+      onUpdate(content, metadata);
     }
   };
 
@@ -189,7 +209,7 @@ export const TextBlock = ({
             }}
             title="Insert Link"
           >
-            🔗
+            <Link className="h-4 w-4" />
           </Button>
 
           <Button
@@ -199,33 +219,35 @@ export const TextBlock = ({
             onClick={() => applyFormatting('removeFormat')}
             title="Clear Formatting"
           >
-            ✕
+            <X className="h-4 w-4" />
           </Button>
         </div>
       )}
 
-      {/* Editable Content */}
-      <div
-        ref={editorRef}
-        contentEditable
-        suppressContentEditableWarning
-        className={cn(
-          "min-h-[1.5em] outline-none py-1 px-1 rounded transition-colors",
-          "focus:bg-secondary/30",
-          getAlignmentClass(),
-          getListClass(),
-          "prose prose-sm dark:prose-invert max-w-none",
-          "[&_a]:text-primary [&_a]:underline",
-          !block.content && "text-muted-foreground"
+      {/* Editable Content with CSS placeholder */}
+      <div className="relative">
+        {isEmpty && (
+          <div className="absolute top-1 left-1 text-muted-foreground pointer-events-none select-none">
+            {placeholder}
+          </div>
         )}
-        onInput={handleInput}
-        onFocus={onFocus}
-        onKeyDown={onKeyDown}
-        dangerouslySetInnerHTML={{ 
-          __html: block.content || `<span class="text-muted-foreground pointer-events-none">${placeholder}</span>` 
-        }}
-        data-placeholder={placeholder}
-      />
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          className={cn(
+            "min-h-[1.5em] outline-none py-1 px-1 rounded transition-colors",
+            "focus:bg-secondary/30",
+            getAlignmentClass(),
+            getListClass(),
+            "prose prose-sm dark:prose-invert max-w-none",
+            "[&_a]:text-primary [&_a]:underline"
+          )}
+          onInput={handleInput}
+          onFocus={onFocus}
+          onKeyDown={onKeyDown}
+        />
+      </div>
     </div>
   );
 };
