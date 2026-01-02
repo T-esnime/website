@@ -438,6 +438,7 @@ export const BlockEditor = ({
                   onMoveUp={() => moveBlockUp(block.id)}
                   onMoveDown={() => moveBlockDown(block.id)}
                   onConvertTo={(type) => convertBlock(block.id, type)}
+                  onAddBlockAfter={(type) => addBlockAfter(block.id, type)}
                   canMoveUp={index > 0}
                   canMoveDown={index < blocks.length - 1}
                 />
