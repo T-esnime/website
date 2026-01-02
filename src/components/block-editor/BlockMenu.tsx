@@ -1,5 +1,4 @@
 import { BlockType, BLOCK_TYPE_INFO } from './types';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -7,6 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { 
   MoreVertical, 
@@ -17,7 +19,15 @@ import {
   Type,
   Heading1,
   Heading2,
-  Heading3
+  Heading3,
+  Image,
+  Code,
+  Quote,
+  Minus,
+  Video,
+  HelpCircle,
+  Table,
+  Plus,
 } from 'lucide-react';
 
 interface BlockMenuProps {
@@ -27,11 +37,34 @@ interface BlockMenuProps {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onConvertTo: (type: BlockType) => void;
+  onAddBlockAfter: (type: BlockType) => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
 }
 
+const ALL_BLOCK_TYPES: BlockType[] = [
+  'text', 'heading1', 'heading2', 'heading3', 
+  'image', 'code', 'quote', 'divider', 'video', 'quiz', 'table'
+];
+
 const CONVERTIBLE_TYPES: BlockType[] = ['text', 'heading1', 'heading2', 'heading3', 'quote'];
+
+const getBlockIcon = (type: BlockType) => {
+  switch (type) {
+    case 'text': return <Type className="w-4 h-4 mr-2" />;
+    case 'heading1': return <Heading1 className="w-4 h-4 mr-2" />;
+    case 'heading2': return <Heading2 className="w-4 h-4 mr-2" />;
+    case 'heading3': return <Heading3 className="w-4 h-4 mr-2" />;
+    case 'image': return <Image className="w-4 h-4 mr-2" />;
+    case 'code': return <Code className="w-4 h-4 mr-2" />;
+    case 'quote': return <Quote className="w-4 h-4 mr-2" />;
+    case 'divider': return <Minus className="w-4 h-4 mr-2" />;
+    case 'video': return <Video className="w-4 h-4 mr-2" />;
+    case 'quiz': return <HelpCircle className="w-4 h-4 mr-2" />;
+    case 'table': return <Table className="w-4 h-4 mr-2" />;
+    default: return <Type className="w-4 h-4 mr-2" />;
+  }
+};
 
 export const BlockMenu = ({
   blockType,
@@ -40,6 +73,7 @@ export const BlockMenu = ({
   onMoveUp,
   onMoveDown,
   onConvertTo,
+  onAddBlockAfter,
   canMoveUp,
   canMoveDown,
 }: BlockMenuProps) => {
@@ -49,6 +83,7 @@ export const BlockMenu = ({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -56,7 +91,28 @@ export const BlockMenu = ({
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48">
+      <DropdownMenuContent align="start" className="w-48 bg-popover">
+        {/* Add Block Submenu */}
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Plus className="w-4 h-4 mr-2" />
+            Add block
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-48 bg-popover">
+            {ALL_BLOCK_TYPES.map((type) => (
+              <DropdownMenuItem 
+                key={type} 
+                onClick={() => onAddBlockAfter(type)}
+              >
+                {getBlockIcon(type)}
+                {BLOCK_TYPE_INFO[type].label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
+
         <DropdownMenuItem onClick={onDuplicate}>
           <Copy className="w-4 h-4 mr-2" />
           Duplicate
@@ -76,23 +132,22 @@ export const BlockMenu = ({
         {canConvert && (
           <>
             <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-              Convert to
-            </div>
-            {CONVERTIBLE_TYPES.filter(t => t !== blockType).map((type) => (
-              <DropdownMenuItem 
-                key={type} 
-                onClick={() => onConvertTo(type)}
-                className="pl-4"
-              >
-                {type === 'text' && <Type className="w-4 h-4 mr-2" />}
-                {type === 'heading1' && <Heading1 className="w-4 h-4 mr-2" />}
-                {type === 'heading2' && <Heading2 className="w-4 h-4 mr-2" />}
-                {type === 'heading3' && <Heading3 className="w-4 h-4 mr-2" />}
-                {type === 'quote' && <span className="w-4 h-4 mr-2 text-center">"</span>}
-                {BLOCK_TYPE_INFO[type].label}
-              </DropdownMenuItem>
-            ))}
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                Convert to
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-48 bg-popover">
+                {CONVERTIBLE_TYPES.filter(t => t !== blockType).map((type) => (
+                  <DropdownMenuItem 
+                    key={type} 
+                    onClick={() => onConvertTo(type)}
+                  >
+                    {getBlockIcon(type)}
+                    {BLOCK_TYPE_INFO[type].label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           </>
         )}
         
