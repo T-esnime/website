@@ -18,9 +18,11 @@ import {
   Loader2,
   FileText,
   User,
+  UserX,
   Calendar,
   Eye
 } from 'lucide-react';
+import { BlockRenderer } from '@/components/block-editor/BlockRenderer';
 
 interface SubmissionWithDetails extends Submission {
   section_title?: string;
@@ -217,13 +219,22 @@ const Admin = () => {
                           {submission.lesson_title} → {submission.section_title}
                         </span>
                       </div>
-                      <p className="text-foreground line-clamp-2 mb-2">
-                        {submission.content.substring(0, 200)}...
-                      </p>
+                      <div className="text-foreground line-clamp-2 mb-2">
+                        <BlockRenderer content={submission.content} className="text-sm" />
+                      </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          {submission.username}
+                          {submission.is_anonymous ? (
+                            <>
+                              <UserX className="w-4 h-4" />
+                              Anonymous ({submission.username})
+                            </>
+                          ) : (
+                            <>
+                              <User className="w-4 h-4" />
+                              {submission.username}
+                            </>
+                          )}
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
@@ -254,12 +265,21 @@ const Admin = () => {
                           
                           <div className="space-y-4">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <User className="w-4 h-4" />
-                              Submitted by {submission.username}
+                              {submission.is_anonymous ? (
+                                <>
+                                  <UserX className="w-4 h-4" />
+                                  Submitted anonymously by {submission.username}
+                                </>
+                              ) : (
+                                <>
+                                  <User className="w-4 h-4" />
+                                  Submitted by {submission.username}
+                                </>
+                              )}
                             </div>
                             
-                            <div className="p-4 rounded-xl bg-secondary/50">
-                              <p className="whitespace-pre-wrap">{submission.content}</p>
+                            <div className="p-4 rounded-xl bg-secondary/50 max-h-[400px] overflow-y-auto">
+                              <BlockRenderer content={submission.content} />
                             </div>
                             
                             <div className="space-y-2">

@@ -15,7 +15,7 @@ import {
   Module, 
   Lesson, 
   Section,
-  Submission
+  SubmissionWithAuthor
 } from '@/lib/supabase-helpers';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -31,7 +31,8 @@ import {
   Loader2,
   ArrowLeft,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,7 +50,7 @@ const Learn = () => {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
-  const [sectionContent, setSectionContent] = useState<Submission | null>(null);
+  const [sectionContent, setSectionContent] = useState<SubmissionWithAuthor | null>(null);
   const [votes, setVotes] = useState<{ upvotes: number; downvotes: number; userVote: number | null }>({ upvotes: 0, downvotes: 0, userVote: null });
   const [voting, setVoting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -241,6 +242,14 @@ const Learn = () => {
             <CardContent>
               {sectionContent ? (
                 <div>
+                  {/* Author attribution */}
+                  {sectionContent.author_username && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 pb-4 border-b border-border">
+                      <User className="w-4 h-4" />
+                      <span>Contributed by <span className="font-medium text-foreground">{sectionContent.author_username}</span></span>
+                    </div>
+                  )}
+                  
                   <BlockRenderer content={sectionContent.content} />
                   
                   {/* Voting UI */}

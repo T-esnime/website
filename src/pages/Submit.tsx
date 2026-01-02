@@ -7,8 +7,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { createSubmission, addPoints, Section } from '@/lib/supabase-helpers';
 import { toast } from 'sonner';
-import { ArrowLeft, Send, Loader2, FileText, Info } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, FileText, Info, EyeOff, Eye } from 'lucide-react';
 import { BlockEditor, ContentBlock, blocksToJson, getPlainTextContent, getDefaultBlocks } from '@/components/block-editor';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const Submit = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +20,7 @@ const Submit = () => {
   const [section, setSection] = useState<Section | null>(null);
   const [lessonTitle, setLessonTitle] = useState('');
   const [blocks, setBlocks] = useState<ContentBlock[]>(getDefaultBlocks());
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -85,7 +88,7 @@ const Submit = () => {
     
     // Convert blocks to JSON for storage
     const content = blocksToJson(blocks);
-    const { data, error } = await createSubmission(section.id, user.id, content);
+    const { data, error } = await createSubmission(section.id, user.id, content, isAnonymous);
     
     if (error) {
       toast.error('Failed to submit content');
@@ -155,9 +158,35 @@ const Submit = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Anonymous Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border border-border/50">
+                <div className="flex items-center gap-3">
+                  {isAnonymous ? (
+                    <EyeOff className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <Eye className="w-5 h-5 text-muted-foreground" />
+                  )}
+                  <div>
+                    <Label htmlFor="anonymous" className="text-sm font-medium cursor-pointer">
+                      Submit anonymously
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {isAnonymous 
+                        ? "Your name won't be shown if approved" 
+                        : "Your name will be shown if approved"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="anonymous"
+                  checked={isAnonymous}
+                  onCheckedChange={setIsAnonymous}
+                />
+              </div>
+
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground mb-2">
-                  Type "/" for block commands • Drag blocks to reorder
+                  Use the 3-dot menu to add different blocks • Drag blocks to reorder
                 </p>
                 <div className="min-h-[300px] bg-secondary/30 border border-border rounded-lg p-4">
                   <BlockEditor

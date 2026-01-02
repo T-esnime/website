@@ -55,8 +55,13 @@ export interface Submission {
   admin_feedback: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  is_anonymous: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface SubmissionWithAuthor extends Submission {
+  author_username?: string;
 }
 
 export interface Vote {
@@ -187,14 +192,15 @@ export async function getSections(lessonId: string): Promise<Section[]> {
 }
 
 // Submission helpers
-export async function createSubmission(sectionId: string, userId: string, content: string) {
+export async function createSubmission(sectionId: string, userId: string, content: string, isAnonymous: boolean = false) {
   const { data, error } = await supabase
     .from('submissions')
     .insert({
       section_id: sectionId,
       user_id: userId,
       content,
-      status: 'pending'
+      status: 'pending',
+      is_anonymous: isAnonymous
     })
     .select()
     .single();
@@ -202,7 +208,7 @@ export async function createSubmission(sectionId: string, userId: string, conten
   return { data, error };
 }
 
-export async function getApprovedSubmission(sectionId: string): Promise<Submission | null> {
+export async function getApprovedSubmission(sectionId: string): Promise<SubmissionWithAuthor | null> {
   // First get the section to find its approved_submission_id
   const { data: section, error: sectionError } = await supabase
     .from('sections')
@@ -221,12 +227,23 @@ export async function getApprovedSubmission(sectionId: string): Promise<Submissi
     .eq('id', section.approved_submission_id)
     .maybeSingle();
   
-  if (error) {
+  if (error || !data) {
     console.error('Error fetching approved submission:', error);
     return null;
   }
   
-  return data;
+  // If not anonymous, fetch the author's username
+  let author_username: string | undefined;
+  if (!data.is_anonymous) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', data.user_id)
+      .maybeSingle();
+    author_username = profile?.username;
+  }
+  
+  return { ...data, author_username };
 }
 
 export async function getPendingSubmissions(): Promise<Submission[]> {
