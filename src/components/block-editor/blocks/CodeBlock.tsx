@@ -140,6 +140,7 @@ export const CodeBlock = ({
         <div className="flex items-center gap-1">
           {/* Line Numbers Toggle */}
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className={cn(
@@ -154,6 +155,7 @@ export const CodeBlock = ({
 
           {/* Copy Button */}
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7"
