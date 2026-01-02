@@ -184,6 +184,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_anonymous: boolean
           reviewed_at: string | null
           reviewed_by: string | null
           section_id: string
@@ -196,6 +197,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           reviewed_at?: string | null
           reviewed_by?: string | null
           section_id: string
@@ -208,6 +210,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           reviewed_at?: string | null
           reviewed_by?: string | null
           section_id?: string
