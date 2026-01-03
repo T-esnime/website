@@ -112,37 +112,41 @@ export const TextBlock = ({
       {isSelected && (
         <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 p-1 bg-popover border border-border rounded-lg shadow-lg">
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => applyFormatting('bold')}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); applyFormatting('bold'); }}
             title="Bold (Ctrl+B)"
           >
             <span className="font-bold text-sm">B</span>
           </Button>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => applyFormatting('italic')}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); applyFormatting('italic'); }}
             title="Italic (Ctrl+I)"
           >
             <span className="italic text-sm">I</span>
           </Button>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => applyFormatting('underline')}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); applyFormatting('underline'); }}
             title="Underline (Ctrl+U)"
           >
             <span className="underline text-sm">U</span>
           </Button>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => applyFormatting('strikeThrough')}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); applyFormatting('strikeThrough'); }}
             title="Strikethrough"
           >
             <span className="line-through text-sm">S</span>
@@ -153,22 +157,22 @@ export const TextBlock = ({
           {/* Alignment */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7">
                 <AlignLeft className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-1">
               <div className="flex gap-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('left')}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.preventDefault(); setAlignment('left'); }}>
                   <AlignLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('center')}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.preventDefault(); setAlignment('center'); }}>
                   <AlignCenter className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('right')}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.preventDefault(); setAlignment('right'); }}>
                   <AlignRight className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAlignment('justify')}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.preventDefault(); setAlignment('justify'); }}>
                   <AlignJustify className="h-4 w-4" />
                 </Button>
               </div>
@@ -178,19 +182,19 @@ export const TextBlock = ({
           {/* List */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7">
                 <List className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-1">
               <div className="flex gap-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setListType('bullet')}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.preventDefault(); setListType('bullet'); }}>
                   <List className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setListType('numbered')}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.preventDefault(); setListType('numbered'); }}>
                   <ListOrdered className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setListType('checklist')}>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.preventDefault(); setListType('checklist'); }}>
                   <CheckSquare className="h-4 w-4" />
                 </Button>
               </div>
@@ -200,10 +204,13 @@ export const TextBlock = ({
           <div className="w-px h-5 bg-border mx-1" />
 
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               const url = prompt('Enter link URL:');
               if (url) applyFormatting('createLink', url);
             }}
@@ -213,10 +220,11 @@ export const TextBlock = ({
           </Button>
 
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => applyFormatting('removeFormat')}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); applyFormatting('removeFormat'); }}
             title="Clear Formatting"
           >
             <X className="h-4 w-4" />

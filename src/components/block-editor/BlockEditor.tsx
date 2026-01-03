@@ -415,15 +415,23 @@ export const BlockEditor = ({
           <div
             ref={provided.innerRef}
             {...provided.draggableProps}
+            style={{
+              ...provided.draggableProps.style,
+              // Fix drag position to be under cursor
+              ...(snapshot.isDragging && {
+                left: 'auto !important',
+                top: 'auto !important',
+              }),
+            }}
             className={cn(
               "group relative flex items-start gap-1 py-1 rounded-lg transition-colors",
-              snapshot.isDragging && "bg-secondary/50 shadow-lg",
+              snapshot.isDragging && "bg-secondary/50 shadow-lg z-50",
               isSelected && "bg-secondary/20"
             )}
           >
             {/* Drag Handle & Block Menu */}
             {!readOnly && (
-              <div className="flex items-center gap-0.5 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5 pt-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                 <div
                   {...provided.dragHandleProps}
                   className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-secondary"
@@ -476,10 +484,13 @@ export const BlockEditor = ({
       {!readOnly && (
         <div className="mt-4 flex items-center gap-2">
           <Button
+            type="button"
             variant="ghost"
             size="sm"
             className="text-muted-foreground hover:text-foreground"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               const lastBlock = blocks[blocks.length - 1];
               if (lastBlock) {
                 addBlockAfter(lastBlock.id, 'text');
