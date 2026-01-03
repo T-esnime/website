@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserSubmissions, getLeaderboard, Submission, Profile } from '@/lib/supabase-helpers';
+import { BlockRenderer } from '@/components/block-editor/BlockRenderer';
 import { 
   Trophy, 
   FileText, 
@@ -202,25 +203,28 @@ const Dashboard = () => {
                       return (
                         <div
                           key={submission.id}
-                          className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50"
+                          className="p-4 rounded-lg bg-secondary/50"
                         >
-                          <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", statusColor[submission.status])}>
-                            <StatusIcon className="w-5 h-5" />
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", statusColor[submission.status])}>
+                              <StatusIcon className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(submission.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <Badge 
+                              variant="secondary"
+                              className={cn("capitalize shrink-0", statusColor[submission.status])}
+                            >
+                              {submission.status}
+                            </Badge>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">
-                              {submission.content.substring(0, 50)}...
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(submission.created_at).toLocaleDateString()}
-                            </p>
+                          <div className="max-h-32 overflow-hidden relative">
+                            <BlockRenderer content={submission.content} className="text-sm" />
+                            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-secondary/50 to-transparent" />
                           </div>
-                          <Badge 
-                            variant="secondary"
-                            className={cn("capitalize", statusColor[submission.status])}
-                          >
-                            {submission.status}
-                          </Badge>
                         </div>
                       );
                     })}
