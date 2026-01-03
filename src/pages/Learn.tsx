@@ -355,11 +355,18 @@ const Learn = () => {
             Back to {selectedModule?.title}
           </Button>
 
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">{selectedLesson.title}</h1>
-            {selectedLesson.description && (
-              <p className="text-muted-foreground">{selectedLesson.description}</p>
-            )}
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{selectedLesson.title}</h1>
+              {selectedLesson.description && (
+                <p className="text-muted-foreground">{selectedLesson.description}</p>
+              )}
+            </div>
+            <Button variant="hero" asChild>
+              <Link to={`/lesson/${selectedLesson.id}`}>
+                View Full Lesson
+              </Link>
+            </Button>
           </div>
 
           <div className="space-y-3">
