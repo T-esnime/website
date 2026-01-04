@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Learn from "./pages/Learn";
 import LessonView from "./pages/LessonView";
-import Modules from "./pages/Modules";
 import Dashboard from "./pages/Dashboard";
 import Leaderboard from "./pages/Leaderboard";
 import Submit from "./pages/Submit";
@@ -28,7 +27,6 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/learn" element={<Learn />} />
-            <Route path="/lesson" element={<Modules />} />
             <Route path="/lesson/:lessonId" element={<LessonView />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
