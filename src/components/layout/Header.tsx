@@ -51,6 +51,9 @@ export const Header = () => {
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center gap-6">
+          <Link to="/modules" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+            Modules
+          </Link>
           <Link to="/learn" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
             Learn
           </Link>
@@ -131,6 +134,9 @@ export const Header = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="glass">
+              <DropdownMenuItem asChild>
+                <Link to="/modules">Modules</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/learn">Learn</Link>
               </DropdownMenuItem>
