@@ -81,6 +81,15 @@ export interface PointsLog {
   created_at: string;
 }
 
+export interface Draft {
+  id: string;
+  user_id: string;
+  section_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Auth helpers
 export async function signUp(email: string, password: string, username: string) {
   const redirectUrl = `${window.location.origin}/`;
@@ -472,4 +481,92 @@ export async function getPointsHistory(userId: string): Promise<PointsLog[]> {
   }
   
   return (data || []) as PointsLog[];
+}
+
+// Draft helpers
+const MAX_DRAFTS = 2;
+
+export async function getUserDrafts(userId: string): Promise<Draft[]> {
+  const { data, error } = await supabase
+    .from('drafts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching drafts:', error);
+    return [];
+  }
+  
+  return (data || []) as Draft[];
+}
+
+export async function getDraft(userId: string, sectionId: string): Promise<Draft | null> {
+  const { data, error } = await supabase
+    .from('drafts')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('section_id', sectionId)
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching draft:', error);
+    return null;
+  }
+  
+  return data as Draft | null;
+}
+
+export async function saveDraft(userId: string, sectionId: string, content: string): Promise<{ success: boolean; error?: string }> {
+  // Check how many drafts the user has
+  const existingDrafts = await getUserDrafts(userId);
+  const existingDraftForSection = existingDrafts.find(d => d.section_id === sectionId);
+  
+  // If updating existing draft for this section, just update it
+  if (existingDraftForSection) {
+    const { error } = await supabase
+      .from('drafts')
+      .update({ content, updated_at: new Date().toISOString() })
+      .eq('id', existingDraftForSection.id);
+    
+    if (error) {
+      console.error('Error updating draft:', error);
+      return { success: false, error: 'Failed to save draft' };
+    }
+    return { success: true };
+  }
+  
+  // If creating new draft, check max limit
+  if (existingDrafts.length >= MAX_DRAFTS) {
+    return { 
+      success: false, 
+      error: `You can only have ${MAX_DRAFTS} drafts at a time. Please delete an existing draft first.` 
+    };
+  }
+  
+  // Create new draft
+  const { error } = await supabase
+    .from('drafts')
+    .insert({ user_id: userId, section_id: sectionId, content });
+  
+  if (error) {
+    console.error('Error creating draft:', error);
+    return { success: false, error: 'Failed to save draft' };
+  }
+  
+  return { success: true };
+}
+
+export async function deleteDraft(draftId: string): Promise<{ success: boolean }> {
+  const { error } = await supabase
+    .from('drafts')
+    .delete()
+    .eq('id', draftId);
+  
+  if (error) {
+    console.error('Error deleting draft:', error);
+    return { success: false };
+  }
+  
+  return { success: true };
 }

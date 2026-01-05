@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { createSubmission, addPoints, Section } from '@/lib/supabase-helpers';
+import { createSubmission, addPoints, Section, getDraft, saveDraft, deleteDraft } from '@/lib/supabase-helpers';
 import { toast } from 'sonner';
-import { ArrowLeft, Send, Loader2, FileText, Info, EyeOff, Eye } from 'lucide-react';
-import { BlockEditor, ContentBlock, blocksToJson, getPlainTextContent, getDefaultBlocks } from '@/components/block-editor';
+import { ArrowLeft, Send, Loader2, FileText, Info, EyeOff, Eye, Save, Trash2 } from 'lucide-react';
+import { BlockEditor, ContentBlock, blocksToJson, getPlainTextContent, getDefaultBlocks, jsonToBlocks } from '@/components/block-editor';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
@@ -23,6 +23,9 @@ const Submit = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
 
   const sectionId = searchParams.get('section');
   const charCount = getPlainTextContent(blocks).length;
@@ -34,15 +37,15 @@ const Submit = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (sectionId) {
+    if (sectionId && user) {
       loadSection();
-    } else {
+    } else if (!sectionId) {
       navigate('/learn');
     }
-  }, [sectionId]);
+  }, [sectionId, user]);
 
   const loadSection = async () => {
-    if (!sectionId) return;
+    if (!sectionId || !user) return;
     
     setLoading(true);
     
@@ -71,7 +74,55 @@ const Submit = () => {
       setLessonTitle(lessonData.title);
     }
     
+    // Load existing draft if any
+    const draft = await getDraft(user.id, sectionId);
+    if (draft) {
+      setDraftId(draft.id);
+      setHasDraft(true);
+      try {
+        const parsedBlocks = jsonToBlocks(draft.content);
+        setBlocks(parsedBlocks);
+      } catch (e) {
+        console.error('Failed to parse draft content:', e);
+      }
+    }
+    
     setLoading(false);
+  };
+
+  const handleSaveDraft = async () => {
+    if (!user || !sectionId) return;
+    
+    setSavingDraft(true);
+    const content = blocksToJson(blocks);
+    const result = await saveDraft(user.id, sectionId, content);
+    
+    if (result.success) {
+      setHasDraft(true);
+      toast.success('Draft saved');
+      // Reload to get the draft ID
+      const draft = await getDraft(user.id, sectionId);
+      if (draft) {
+        setDraftId(draft.id);
+      }
+    } else {
+      toast.error(result.error || 'Failed to save draft');
+    }
+    setSavingDraft(false);
+  };
+
+  const handleDeleteDraft = async () => {
+    if (!draftId) return;
+    
+    const result = await deleteDraft(draftId);
+    if (result.success) {
+      setDraftId(null);
+      setHasDraft(false);
+      setBlocks(getDefaultBlocks());
+      toast.success('Draft deleted');
+    } else {
+      toast.error('Failed to delete draft');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,6 +149,11 @@ const Submit = () => {
     
     // Award points for submission
     await addPoints(user.id, 10, 'Content submission', data?.id);
+    
+    // Delete draft after successful submission
+    if (draftId) {
+      await deleteDraft(draftId);
+    }
     
     toast.success('Content submitted successfully! +10 points');
     navigate('/dashboard');
@@ -198,7 +254,37 @@ const Submit = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={handleSaveDraft}
+                  disabled={savingDraft || charCount < 10}
+                >
+                  {savingDraft ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      {hasDraft ? 'Update Draft' : 'Save Draft'}
+                    </>
+                  )}
+                </Button>
+                
+                {hasDraft && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    onClick={handleDeleteDraft}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Draft
+                  </Button>
+                )}
+                
                 <Button
                   type="submit"
                   variant="hero"
