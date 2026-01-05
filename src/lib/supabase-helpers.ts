@@ -457,3 +457,19 @@ export async function checkAndAwardDailyLoginPoints(userId: string): Promise<boo
   
   return false;
 }
+
+// Get user's points history
+export async function getPointsHistory(userId: string): Promise<PointsLog[]> {
+  const { data, error } = await supabase
+    .from('points_log')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching points history:', error);
+    return [];
+  }
+  
+  return (data || []) as PointsLog[];
+}

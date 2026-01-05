@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserSubmissions, getLeaderboard, Submission, Profile } from '@/lib/supabase-helpers';
+import { getUserSubmissions, getLeaderboard, getPointsHistory, Submission, Profile, PointsLog } from '@/lib/supabase-helpers';
 import { BlockRenderer } from '@/components/block-editor/BlockRenderer';
+import { PointsHistory } from '@/components/dashboard/PointsHistory';
 import { 
   Trophy, 
   FileText, 
@@ -62,6 +63,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
+  const [pointsLog, setPointsLog] = useState<PointsLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
 
@@ -81,13 +83,15 @@ const Dashboard = () => {
     if (!user) return;
     
     setLoading(true);
-    const [userSubmissions, leaders] = await Promise.all([
+    const [userSubmissions, leaders, history] = await Promise.all([
       getUserSubmissions(user.id),
-      getLeaderboard(100)
+      getLeaderboard(100),
+      getPointsHistory(user.id)
     ]);
     
     setSubmissions(userSubmissions);
     setLeaderboard(leaders);
+    setPointsLog(history);
     
     // Find user rank
     const rank = leaders.findIndex(p => p.id === user.id);
@@ -315,6 +319,11 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Points History Section */}
+        <div className="mt-8">
+          <PointsHistory pointsLog={pointsLog} />
         </div>
       </div>
     </MainLayout>
