@@ -238,46 +238,8 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Quick Stats & Leaderboard Preview */}
+          {/* Leaderboard Preview */}
           <div className="space-y-6">
-            {/* Submission Stats */}
-            <Card className="glass border-border/50">
-              <CardHeader>
-                <CardTitle className="text-lg">Submission Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Approval Rate</span>
-                    <span className="font-medium">
-                      {submissions.length > 0 
-                        ? Math.round((approvedCount / submissions.length) * 100) 
-                        : 0}%
-                    </span>
-                  </div>
-                  <Progress 
-                    value={submissions.length > 0 ? (approvedCount / submissions.length) * 100 : 0} 
-                    className="h-2"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="p-3 rounded-lg bg-success/10">
-                    <p className="text-lg font-bold text-success">{approvedCount}</p>
-                    <p className="text-xs text-muted-foreground">Approved</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-warning/10">
-                    <p className="text-lg font-bold text-warning">{pendingCount}</p>
-                    <p className="text-xs text-muted-foreground">Pending</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-destructive/10">
-                    <p className="text-lg font-bold text-destructive">{rejectedCount}</p>
-                    <p className="text-xs text-muted-foreground">Rejected</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Leaderboard Preview */}
             <Card className="glass border-border/50">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Leaderboard</CardTitle>
