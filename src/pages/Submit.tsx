@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { createSubmission, addPoints, Section, getDraft, saveDraft, deleteDraft } from '@/lib/supabase-helpers';
 import { toast } from 'sonner';
-import { ArrowLeft, Send, Loader2, FileText, Info, EyeOff, Eye, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, FileText, Info, EyeOff, Eye, Trash2, Check } from 'lucide-react';
 import { BlockEditor, ContentBlock, blocksToJson, getPlainTextContent, getDefaultBlocks, jsonToBlocks } from '@/components/block-editor';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,9 @@ const Submit = () => {
   const [draftId, setDraftId] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadRef = useRef(true);
 
   const sectionId = searchParams.get('section');
   const charCount = getPlainTextContent(blocks).length;
@@ -90,26 +93,57 @@ const Submit = () => {
     setLoading(false);
   };
 
-  const handleSaveDraft = async () => {
+  const handleAutoSaveDraft = useCallback(async (blocksToSave: ContentBlock[]) => {
     if (!user || !sectionId) return;
     
+    const content = blocksToJson(blocksToSave);
+    const textContent = getPlainTextContent(blocksToSave);
+    
+    // Only save if there's meaningful content
+    if (textContent.length < 10) return;
+    
     setSavingDraft(true);
-    const content = blocksToJson(blocks);
     const result = await saveDraft(user.id, sectionId, content);
     
     if (result.success) {
       setHasDraft(true);
-      toast.success('Draft saved');
-      // Reload to get the draft ID
-      const draft = await getDraft(user.id, sectionId);
-      if (draft) {
-        setDraftId(draft.id);
+      setLastSaved(new Date());
+      // Get the draft ID if we don't have it yet
+      if (!draftId) {
+        const draft = await getDraft(user.id, sectionId);
+        if (draft) {
+          setDraftId(draft.id);
+        }
       }
-    } else {
-      toast.error(result.error || 'Failed to save draft');
     }
     setSavingDraft(false);
-  };
+  }, [user, sectionId, draftId]);
+
+  // Auto-save effect with 2 second debounce
+  useEffect(() => {
+    // Skip auto-save on initial load
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    
+    // Set new timer for auto-save
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleAutoSaveDraft(blocks);
+    }, 2000);
+    
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [blocks, handleAutoSaveDraft]);
 
   const handleDeleteDraft = async () => {
     if (!draftId) return;
@@ -254,29 +288,32 @@ const Submit = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={handleSaveDraft}
-                  disabled={savingDraft || charCount < 10}
-                >
+              {/* Auto-save status */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   {savingDraft ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
-                      {hasDraft ? 'Update Draft' : 'Save Draft'}
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving...</span>
                     </>
-                  )}
-                </Button>
+                  ) : lastSaved ? (
+                    <>
+                      <Check className="w-4 h-4 text-green-500" />
+                      <span>Draft saved</span>
+                    </>
+                  ) : hasDraft ? (
+                    <>
+                      <Check className="w-4 h-4 text-green-500" />
+                      <span>Draft loaded</span>
+                    </>
+                  ) : null}
+                </div>
                 
                 {hasDraft && (
                   <Button
                     type="button"
                     variant="ghost"
-                    size="lg"
+                    size="sm"
                     onClick={handleDeleteDraft}
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
@@ -284,7 +321,9 @@ const Submit = () => {
                     Delete Draft
                   </Button>
                 )}
-                
+              </div>
+
+              <div className="flex gap-3">
                 <Button
                   type="submit"
                   variant="hero"
