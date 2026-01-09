@@ -303,7 +303,7 @@ export const QuizBlock = ({
             ({metadata.questions.length} question{metadata.questions.length !== 1 ? 's' : ''})
           </span>
         </div>
-        <Button variant="ghost" size="icon" onClick={onDelete}>
+        <Button type="button" variant="ghost" size="icon" onClick={onDelete}>
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
@@ -397,6 +397,7 @@ export const QuizBlock = ({
                           className="flex-1"
                         />
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
                           onClick={() => deleteOption(question.id, option.id)}
@@ -407,6 +408,7 @@ export const QuizBlock = ({
                       </div>
                     ))}
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => addOption(question.id)}
@@ -424,12 +426,14 @@ export const QuizBlock = ({
                     <Label>Correct Answer</Label>
                     <div className="flex gap-4">
                       <Button
+                        type="button"
                         variant={question.correctAnswer === 'true' ? 'default' : 'outline'}
                         onClick={() => updateQuestion(question.id, { correctAnswer: 'true' })}
                       >
                         True
                       </Button>
                       <Button
+                        type="button"
                         variant={question.correctAnswer === 'false' ? 'default' : 'outline'}
                         onClick={() => updateQuestion(question.id, { correctAnswer: 'false' })}
                       >
@@ -449,6 +453,7 @@ export const QuizBlock = ({
                 </div>
                 
                 <Button
+                  type="button"
                   variant="destructive"
                   size="sm"
                   onClick={() => deleteQuestion(question.id)}
@@ -461,7 +466,7 @@ export const QuizBlock = ({
           </div>
         ))}
         
-        <Button onClick={addQuestion} variant="outline" className="w-full">
+        <Button type="button" onClick={addQuestion} variant="outline" className="w-full">
           <Plus className="w-4 h-4 mr-2" />
           Add Question
         </Button>
