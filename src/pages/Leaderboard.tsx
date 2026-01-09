@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { getLeaderboard, Profile } from '@/lib/supabase-helpers';
+import { getLeaderboard, LeaderboardEntry } from '@/lib/supabase-helpers';
 import { useAuth } from '@/contexts/AuthContext';
 import { Trophy, Medal, Crown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Leaderboard = () => {
-  const [leaders, setLeaders] = useState<Profile[]>([]);
+  const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 

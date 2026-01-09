@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserSubmissions, getLeaderboard, getPointsHistory, Submission, Profile, PointsLog } from '@/lib/supabase-helpers';
+import { getUserSubmissions, getLeaderboard, getPointsHistory, Submission, LeaderboardEntry, PointsLog } from '@/lib/supabase-helpers';
 import { BlockRenderer } from '@/components/block-editor/BlockRenderer';
 import { PointsHistory } from '@/components/dashboard/PointsHistory';
 import { 
@@ -62,7 +62,7 @@ const Dashboard = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [pointsLog, setPointsLog] = useState<PointsLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
