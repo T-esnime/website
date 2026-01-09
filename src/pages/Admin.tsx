@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getPendingSubmissions, approveSubmission, rejectSubmission, addPoints, Submission } from '@/lib/supabase-helpers';
@@ -20,9 +21,11 @@ import {
   User,
   UserX,
   Calendar,
-  Eye
+  Eye,
+  LayoutGrid
 } from 'lucide-react';
 import { BlockRenderer } from '@/components/block-editor/BlockRenderer';
+import SectionSubmissionOverview from '@/components/admin/SectionSubmissionOverview';
 
 interface SubmissionWithDetails extends Submission {
   section_title?: string;
@@ -170,166 +173,188 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
-          <Card className="glass border-border/50">
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-warning/20 flex items-center justify-center">
-                <Clock className="w-6 h-6 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{submissions.length}</p>
-                <p className="text-sm text-muted-foreground">Pending Review</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <LayoutGrid className="w-4 h-4" />
+              Section Overview
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Pending ({submissions.length})
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Submissions List */}
-        <Card className="glass border-border/50">
-          <CardHeader>
-            <CardTitle>Pending Submissions</CardTitle>
-            <CardDescription>Review user contributions before publishing</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {submissions.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="font-semibold mb-2">All Caught Up!</h3>
-                <p className="text-muted-foreground">
-                  No pending submissions to review.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {submissions.map((submission) => (
-                  <div
-                    key={submission.id}
-                    className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl bg-secondary/50"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="bg-warning/20 text-warning">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Pending
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {submission.lesson_title} → {submission.section_title}
-                        </span>
-                      </div>
-                      <div className="text-foreground line-clamp-2 mb-2">
-                        <BlockRenderer content={submission.content} className="text-sm" />
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          {submission.is_anonymous ? (
-                            <>
-                              <UserX className="w-4 h-4" />
-                              Anonymous ({submission.username})
-                            </>
-                          ) : (
-                            <>
-                              <User className="w-4 h-4" />
-                              {submission.username}
-                            </>
-                          )}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {new Date(submission.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
+          {/* Section Overview Tab */}
+          <TabsContent value="overview">
+            <SectionSubmissionOverview />
+          </TabsContent>
+
+          {/* Pending Submissions Tab */}
+          <TabsContent value="pending">
+            {/* Stats */}
+            <div className="grid sm:grid-cols-3 gap-4 mb-8">
+              <Card className="glass border-border/50">
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-warning/20 flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{submissions.length}</p>
+                    <p className="text-sm text-muted-foreground">Pending Review</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Submissions List */}
+            <Card className="glass border-border/50">
+              <CardHeader>
+                <CardTitle>Pending Submissions</CardTitle>
+                <CardDescription>Review user contributions before publishing</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {submissions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle2 className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedSubmission(submission)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Review
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto glass">
-                          <DialogHeader>
-                            <DialogTitle>Review Submission</DialogTitle>
-                            <DialogDescription>
+                    <h3 className="font-semibold mb-2">All Caught Up!</h3>
+                    <p className="text-muted-foreground">
+                      No pending submissions to review.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {submissions.map((submission) => (
+                      <div
+                        key={submission.id}
+                        className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl bg-secondary/50"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="secondary" className="bg-warning/20 text-warning">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pending
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
                               {submission.lesson_title} → {submission.section_title}
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            </span>
+                          </div>
+                          <div className="text-foreground line-clamp-2 mb-2">
+                            <BlockRenderer content={submission.content} className="text-sm" />
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
                               {submission.is_anonymous ? (
                                 <>
                                   <UserX className="w-4 h-4" />
-                                  Submitted anonymously by {submission.username}
+                                  Anonymous ({submission.username})
                                 </>
                               ) : (
                                 <>
                                   <User className="w-4 h-4" />
-                                  Submitted by {submission.username}
+                                  {submission.username}
                                 </>
                               )}
-                            </div>
-                            
-                            <div className="p-4 rounded-xl bg-secondary/50 max-h-[400px] overflow-y-auto">
-                              <BlockRenderer content={submission.content} />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">
-                                Feedback (optional, shown if rejected)
-                              </label>
-                              <Textarea
-                                placeholder="Provide feedback for the author..."
-                                value={feedback}
-                                onChange={(e) => setFeedback(e.target.value)}
-                                className="bg-secondary border-border"
-                              />
-                            </div>
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {new Date(submission.created_at).toLocaleDateString()}
+                            </span>
                           </div>
-                          
-                          <DialogFooter className="gap-2">
-                            <Button
-                              variant="destructive"
-                              onClick={() => handleReject(submission)}
-                              disabled={processing}
-                            >
-                              {processing ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              ) : (
-                                <XCircle className="w-4 h-4 mr-2" />
-                              )}
-                              Reject
-                            </Button>
-                            <Button
-                              variant="success"
-                              onClick={() => handleApprove(submission)}
-                              disabled={processing}
-                            >
-                              {processing ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              ) : (
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                              )}
-                              Approve & Publish
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedSubmission(submission)}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                Review
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto glass">
+                              <DialogHeader>
+                                <DialogTitle>Review Submission</DialogTitle>
+                                <DialogDescription>
+                                  {submission.lesson_title} → {submission.section_title}
+                                </DialogDescription>
+                              </DialogHeader>
+                              
+                              <div className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  {submission.is_anonymous ? (
+                                    <>
+                                      <UserX className="w-4 h-4" />
+                                      Submitted anonymously by {submission.username}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <User className="w-4 h-4" />
+                                      Submitted by {submission.username}
+                                    </>
+                                  )}
+                                </div>
+                                
+                                <div className="p-4 rounded-xl bg-secondary/50 max-h-[400px] overflow-y-auto">
+                                  <BlockRenderer content={submission.content} />
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium">
+                                    Feedback (optional, shown if rejected)
+                                  </label>
+                                  <Textarea
+                                    placeholder="Provide feedback for the author..."
+                                    value={feedback}
+                                    onChange={(e) => setFeedback(e.target.value)}
+                                    className="bg-secondary border-border"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <DialogFooter className="gap-2">
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleReject(submission)}
+                                  disabled={processing}
+                                >
+                                  {processing ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                  )}
+                                  Reject
+                                </Button>
+                                <Button
+                                  variant="success"
+                                  onClick={() => handleApprove(submission)}
+                                  disabled={processing}
+                                >
+                                  {processing ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                  )}
+                                  Approve & Publish
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );
