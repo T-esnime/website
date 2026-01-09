@@ -318,7 +318,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      leaderboard_view: {
+        Row: {
+          avatar_url: string | null
+          id: string | null
+          points: number | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          id?: string | null
+          points?: number | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          id?: string | null
+          points?: number | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_points: {
