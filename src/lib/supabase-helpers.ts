@@ -407,12 +407,18 @@ export async function getVotes(submissionId: string, currentUserId?: string): Pr
   return { upvotes, downvotes, userVote };
 }
 
-// Leaderboard helpers
-export async function getLeaderboard(limit = 50): Promise<Profile[]> {
+// Leaderboard helpers - uses dedicated view that only exposes public data
+export interface LeaderboardEntry {
+  id: string;
+  username: string;
+  points: number | null;
+  avatar_url: string | null;
+}
+
+export async function getLeaderboard(limit = 50): Promise<LeaderboardEntry[]> {
   const { data, error } = await supabase
-    .from('profiles')
+    .from('leaderboard_view')
     .select('*')
-    .order('points', { ascending: false })
     .limit(limit);
   
   if (error) {
