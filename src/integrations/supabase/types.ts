@@ -201,6 +201,13 @@ export type Database = {
             foreignKeyName: "sections_approved_submission_fkey"
             columns: ["approved_submission_id"]
             isOneToOne: false
+            referencedRelation: "approved_submissions_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sections_approved_submission_fkey"
+            columns: ["approved_submission_id"]
+            isOneToOne: false
             referencedRelation: "submissions"
             referencedColumns: ["id"]
           },
@@ -311,6 +318,13 @@ export type Database = {
             foreignKeyName: "votes_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
+            referencedRelation: "approved_submissions_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
             referencedRelation: "submissions"
             referencedColumns: ["id"]
           },
@@ -318,6 +332,56 @@ export type Database = {
       }
     }
     Views: {
+      approved_submissions_view: {
+        Row: {
+          admin_feedback: string | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          is_anonymous: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          section_id: string | null
+          status: Database["public"]["Enums"]["submission_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_feedback?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          section_id?: string | null
+          status?: Database["public"]["Enums"]["submission_status"] | null
+          updated_at?: string | null
+          user_id?: never
+        }
+        Update: {
+          admin_feedback?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          section_id?: string | null
+          status?: Database["public"]["Enums"]["submission_status"] | null
+          updated_at?: string | null
+          user_id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leaderboard_view: {
         Row: {
           avatar_url: string | null
