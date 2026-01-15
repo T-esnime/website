@@ -229,9 +229,10 @@ export async function getApprovedSubmission(sectionId: string): Promise<Submissi
     return null;
   }
   
-  // Then fetch the specific approved submission
+  // Use the approved_submissions_view which automatically hides user_id for anonymous submissions
+  // This ensures privacy at the database level, not just in frontend code
   const { data, error } = await supabase
-    .from('submissions')
+    .from('approved_submissions_view')
     .select('*')
     .eq('id', section.approved_submission_id)
     .maybeSingle();
@@ -241,9 +242,9 @@ export async function getApprovedSubmission(sectionId: string): Promise<Submissi
     return null;
   }
   
-  // If not anonymous, fetch the author's username
+  // If not anonymous and user_id is available, fetch the author's username
   let author_username: string | undefined;
-  if (!data.is_anonymous) {
+  if (!data.is_anonymous && data.user_id) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('username')
