@@ -403,6 +403,29 @@ export type Database = {
         }
         Relationships: []
       }
+      vote_counts_view: {
+        Row: {
+          downvotes: number | null
+          submission_id: string | null
+          upvotes: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "approved_submissions_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "votes_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_points: {

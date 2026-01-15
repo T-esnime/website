@@ -387,21 +387,26 @@ export async function voteOnSubmission(submissionId: string, voterId: string, vo
 }
 
 export async function getVotes(submissionId: string, currentUserId?: string): Promise<{ upvotes: number; downvotes: number; userVote: number | null }> {
-  const { data: votes } = await supabase
-    .from('votes')
-    .select('*')
-    .eq('submission_id', submissionId);
+  // Use the vote_counts_view for aggregated counts - this hides individual voter identities
+  const { data: voteCounts } = await supabase
+    .from('vote_counts_view')
+    .select('upvotes, downvotes')
+    .eq('submission_id', submissionId)
+    .maybeSingle();
   
-  if (!votes) {
-    return { upvotes: 0, downvotes: 0, userVote: null };
-  }
+  const upvotes = voteCounts?.upvotes ?? 0;
+  const downvotes = voteCounts?.downvotes ?? 0;
   
-  const upvotes = votes.filter(v => v.vote_type === 1).length;
-  const downvotes = votes.filter(v => v.vote_type === -1).length;
-  
+  // Only query the user's own vote if they're logged in
+  // RLS policy restricts this to only show the current user's votes
   let userVote: number | null = null;
   if (currentUserId) {
-    const userVoteRecord = votes.find(v => v.user_id === currentUserId);
+    const { data: userVoteRecord } = await supabase
+      .from('votes')
+      .select('vote_type')
+      .eq('submission_id', submissionId)
+      .eq('user_id', currentUserId)
+      .maybeSingle();
     userVote = userVoteRecord?.vote_type ?? null;
   }
   
